@@ -6,11 +6,30 @@ import androidx.glance.GlanceId
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.provideContent
+import androidx.glance.appwidget.state.updateAppWidgetState
+import androidx.glance.state.PreferencesGlanceStateDefinition
+import androidx.datastore.preferences.core.longPreferencesKey
 
 class CountdownWidget : GlanceAppWidget() {
 
+    // Define a preferences key for the last update timestamp
+    companion object {
+        private val LAST_UPDATE_KEY = longPreferencesKey("last_update")
+    }
+
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         Log.d("CountdownWidget", "provideGlance called for ID: $id")
+
+        // Update the timestamp in widget state to force refresh
+        try {
+            updateAppWidgetState(context, PreferencesGlanceStateDefinition, id) { prefs ->
+                prefs.toMutablePreferences().apply {
+                    this[LAST_UPDATE_KEY] = System.currentTimeMillis()
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("CountdownWidget", "Failed to update widget state", e)
+        }
 
         // Provide the content - our Material You enabled content
         provideContent {
@@ -43,6 +62,21 @@ class CountdownWidgetReceiver : GlanceAppWidgetReceiver() {
         Log.d("CountdownWidget", "onEnabled called")
 
         // Initialize updates when the first widget is added
+        WidgetUpdater.requestUpdate(context)
+    }
+
+    override fun onDisabled(context: Context) {
+        super.onDisabled(context)
+        Log.d("CountdownWidget", "onDisabled called - all widgets removed")
+
+        // Could add cleanup code here if needed
+    }
+
+    override fun onRestored(context: Context, oldWidgetIds: IntArray, newWidgetIds: IntArray) {
+        super.onRestored(context, oldWidgetIds, newWidgetIds)
+        Log.d("CountdownWidget", "onRestored called")
+
+        // Request updates for restored widgets
         WidgetUpdater.requestUpdate(context)
     }
 }

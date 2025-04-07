@@ -37,6 +37,8 @@ private val LIGHT_SURFACE = Color(0xFFFDFBFF)
 private val LIGHT_ON_SURFACE = Color(0xFF1A1C1E)
 private val LIGHT_PRIMARY_CONTAINER = Color(0xFFD8E2FF)
 private val LIGHT_ON_PRIMARY_CONTAINER = Color(0xFF001A41)
+private val LIGHT_SECONDARY_CONTAINER = Color(0xFFD7E3F7)
+private val LIGHT_ON_SECONDARY_CONTAINER = Color(0xFF101C2B)
 
 @Composable
 fun CountdownWidgetContent() {
@@ -58,7 +60,7 @@ fun CountdownWidgetContent() {
         Column(
             modifier = GlanceModifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(12.dp),
             horizontalAlignment = Alignment.Horizontal.CenterHorizontally,
             verticalAlignment = Alignment.Vertical.CenterVertically
         ) {
@@ -73,7 +75,7 @@ fun CountdownWidgetContent() {
                 modifier = GlanceModifier.fillMaxWidth()
             )
 
-            Spacer(modifier = GlanceModifier.height(8.dp))
+            Spacer(modifier = GlanceModifier.height(4.dp))
 
             Text(
                 text = "July 4th, 12:00 PM (UTC+2)",
@@ -85,7 +87,7 @@ fun CountdownWidgetContent() {
                 modifier = GlanceModifier.fillMaxWidth()
             )
 
-            Spacer(modifier = GlanceModifier.height(16.dp))
+            Spacer(modifier = GlanceModifier.height(12.dp))
 
             Row(
                 modifier = GlanceModifier.fillMaxWidth(),
@@ -96,7 +98,9 @@ fun CountdownWidgetContent() {
                 CountdownUnit(
                     value = timeLeft.days,
                     label = "Days",
-                    modifier = GlanceModifier.defaultWeight()
+                    modifier = GlanceModifier.defaultWeight(),
+                    containerColor = LIGHT_PRIMARY_CONTAINER,
+                    textColor = LIGHT_ON_PRIMARY_CONTAINER
                 )
 
                 Spacer(modifier = GlanceModifier.width(4.dp))
@@ -105,7 +109,9 @@ fun CountdownWidgetContent() {
                 CountdownUnit(
                     value = timeLeft.hours,
                     label = "Hours",
-                    modifier = GlanceModifier.defaultWeight()
+                    modifier = GlanceModifier.defaultWeight(),
+                    containerColor = LIGHT_SECONDARY_CONTAINER,
+                    textColor = LIGHT_ON_SECONDARY_CONTAINER
                 )
 
                 Spacer(modifier = GlanceModifier.width(4.dp))
@@ -114,7 +120,9 @@ fun CountdownWidgetContent() {
                 CountdownUnit(
                     value = timeLeft.minutes,
                     label = "Min",
-                    modifier = GlanceModifier.defaultWeight()
+                    modifier = GlanceModifier.defaultWeight(),
+                    containerColor = LIGHT_PRIMARY_CONTAINER,
+                    textColor = LIGHT_ON_PRIMARY_CONTAINER
                 )
 
                 Spacer(modifier = GlanceModifier.width(4.dp))
@@ -123,12 +131,24 @@ fun CountdownWidgetContent() {
                 CountdownUnit(
                     value = timeLeft.seconds,
                     label = "Sec",
-                    modifier = GlanceModifier.defaultWeight()
+                    modifier = GlanceModifier.defaultWeight(),
+                    containerColor = LIGHT_SECONDARY_CONTAINER,
+                    textColor = LIGHT_ON_SECONDARY_CONTAINER
                 )
             }
 
-            // Request an update for the widget to keep the countdown current
-            WidgetUpdater.requestUpdate(context)
+            Spacer(modifier = GlanceModifier.height(4.dp))
+
+            // Last updated indicator to show freshness
+            Text(
+                text = "Tap to refresh",
+                style = TextStyle(
+                    color = ColorProvider(LIGHT_ON_SURFACE),
+                    fontSize = 9.sp,
+                    textAlign = TextAlign.Center
+                ),
+                modifier = GlanceModifier.fillMaxWidth()
+            )
         }
     }
 }
@@ -137,7 +157,9 @@ fun CountdownWidgetContent() {
 fun CountdownUnit(
     value: Long,
     label: String,
-    modifier: GlanceModifier = GlanceModifier
+    modifier: GlanceModifier = GlanceModifier,
+    containerColor: Color = LIGHT_PRIMARY_CONTAINER,
+    textColor: Color = LIGHT_ON_PRIMARY_CONTAINER
 ) {
     Column(
         modifier = modifier,
@@ -148,23 +170,23 @@ fun CountdownUnit(
         Box(
             modifier = GlanceModifier
                 .size(width = 48.dp, height = 48.dp)
-                .cornerRadius(16.dp)
-                .background(LIGHT_PRIMARY_CONTAINER)
+                .cornerRadius(12.dp)
+                .background(containerColor)
                 .padding(4.dp),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = String.format("%02d", value),
                 style = TextStyle(
-                    color = ColorProvider(LIGHT_ON_PRIMARY_CONTAINER),
-                    fontSize = 16.sp,
+                    color = ColorProvider(textColor),
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
                 )
             )
         }
 
-        Spacer(modifier = GlanceModifier.height(4.dp))
+        Spacer(modifier = GlanceModifier.height(2.dp))
 
         Text(
             text = label,

@@ -15,17 +15,16 @@ class CsBeCountdownApp : Application(), Configuration.Provider {
         // Initialize WorkManager with our configuration
         androidx.work.WorkManager.initialize(this, workManagerConfiguration)
 
-        // Initialize widget updates
+        // Initialize widget updates with improved mechanism
         try {
-            // Use the new WidgetUpdater instead of direct WorkManager
             WidgetUpdater.requestUpdate(this)
-            Log.d("CsBeCountdownApp", "Widget updates scheduled")
+            Log.d("CsBeCountdownApp", "Widget updates scheduled with improved mechanism")
         } catch (e: Exception) {
             Log.e("CsBeCountdownApp", "Failed to schedule widget updates", e)
         }
     }
 
-    // Configure WorkManager
+    // Configure WorkManager with debug logging enabled
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
             .setMinimumLoggingLevel(Log.DEBUG)
