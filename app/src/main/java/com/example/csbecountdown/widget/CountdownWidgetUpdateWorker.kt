@@ -22,19 +22,20 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import java.util.Calendar
 import java.util.concurrent.TimeUnit
 
 /**
  * Handles widget updates using both WorkManager (for periodic reliable updates)
- * and AlarmManager (for more frequent updates if possible)
+ * and AlarmManager (for better alignment with minute boundaries)
  */
 object WidgetUpdater {
 
     // Constants for update mechanisms
     const val ACTION_UPDATE_WIDGET = "com.example.csbecountdown.ACTION_UPDATE_WIDGET"
     private const val WORK_NAME = "com.example.csbecountdown.WIDGET_UPDATE_WORK"
-    private const val UPDATE_INTERVAL_SECONDS = 15 // Update at least every 15 seconds via WorkManager
-    private const val QUICK_UPDATE_INTERVAL_MS = 1000 // Try for 1-second updates with AlarmManager
+    private const val UPDATE_INTERVAL_MINUTES = 1L // Update every minute via WorkManager
+    private const val INITIAL_DELAY_MS = 60000L // Wait 1 minute for the first update
 
     // Counters for logging
     private var updateAttempts = 0
@@ -47,8 +48,8 @@ object WidgetUpdater {
         // 1. Schedule periodic updates using WorkManager (reliable but less frequent)
         schedulePeriodicUpdates(context)
 
-        // 2. Try to schedule quick updates using AlarmManager (may be throttled by system)
-        scheduleQuickUpdate(context)
+        // 2. Try to schedule updates aligned with minute boundaries
+        scheduleMinuteAlignedUpdate(context)
 
         // Log update statistics
         updateAttempts++
@@ -57,6 +58,7 @@ object WidgetUpdater {
 
     /**
      * Schedule regular updates using WorkManager (reliable background processing)
+     * This will update the widget every minute
      */
     private fun schedulePeriodicUpdates(context: Context) {
         try {
@@ -66,9 +68,10 @@ object WidgetUpdater {
                 .setRequiresBatteryNotLow(false)
                 .build()
 
-            // Create a periodic work request
+            // Create a periodic work request that runs every minute
             val updateRequest = PeriodicWorkRequestBuilder<WidgetUpdateWorker>(
-                UPDATE_INTERVAL_SECONDS.toLong(), TimeUnit.SECONDS)
+                UPDATE_INTERVAL_MINUTES, TimeUnit.MINUTES)
+                .setInitialDelay(INITIAL_DELAY_MS, TimeUnit.MILLISECONDS)
                 .setConstraints(constraints)
                 .build()
 
@@ -79,17 +82,16 @@ object WidgetUpdater {
                 updateRequest
             )
 
-            Log.d("WidgetUpdater", "Periodic widget updates scheduled with WorkManager")
+            Log.d("WidgetUpdater", "Periodic widget updates scheduled for every minute")
         } catch (e: Exception) {
             Log.e("WidgetUpdater", "Failed to schedule periodic widget updates", e)
         }
     }
 
     /**
-     * Try to schedule a quick update using AlarmManager for more immediate feedback
-     * Note: These may be throttled by the system on newer Android versions
+     * Schedule an alarm to align updates with minute boundaries for more natural timing
      */
-    private fun scheduleQuickUpdate(context: Context) {
+    private fun scheduleMinuteAlignedUpdate(context: Context) {
         try {
             val pendingIntent = PendingIntent.getBroadcast(
                 context,
@@ -101,50 +103,26 @@ object WidgetUpdater {
             )
 
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-            val triggerTime = System.currentTimeMillis() + QUICK_UPDATE_INTERVAL_MS
 
-            // Try to use the most reliable alarm method available on this device
-            when {
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-                    // On Android 12+, check if we can schedule exact alarms
-                    if (alarmManager.canScheduleExactAlarms()) {
-                        alarmManager.setExactAndAllowWhileIdle(
-                            AlarmManager.RTC_WAKEUP,
-                            triggerTime,
-                            pendingIntent
-                        )
-                        Log.d("WidgetUpdater", "Scheduled exact alarm (Android 12+)")
-                    } else {
-                        // Fall back to inexact alarm
-                        alarmManager.set(
-                            AlarmManager.RTC_WAKEUP,
-                            triggerTime,
-                            pendingIntent
-                        )
-                        Log.d("WidgetUpdater", "No exact alarm permission, using regular alarm")
-                    }
-                }
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.M -> {
-                    // Android 6-11
-                    alarmManager.setExactAndAllowWhileIdle(
-                        AlarmManager.RTC_WAKEUP,
-                        triggerTime,
-                        pendingIntent
-                    )
-                    Log.d("WidgetUpdater", "Using setExactAndAllowWhileIdle")
-                }
-                else -> {
-                    // Older Android versions
-                    alarmManager.setExact(
-                        AlarmManager.RTC_WAKEUP,
-                        triggerTime,
-                        pendingIntent
-                    )
-                    Log.d("WidgetUpdater", "Using setExact for older Android")
-                }
-            }
+            // Calculate the next minute boundary
+            val currentTimeMillis = System.currentTimeMillis()
+            val calendar = Calendar.getInstance()
+            calendar.timeInMillis = currentTimeMillis
+            calendar.add(Calendar.MINUTE, 1)
+            calendar.set(Calendar.SECOND, 0)
+            calendar.set(Calendar.MILLISECOND, 0)
+            val nextMinute = calendar.timeInMillis
+
+            // Set alarm for next minute boundary
+            alarmManager.set(
+                AlarmManager.RTC,
+                nextMinute,
+                pendingIntent
+            )
+
+            Log.d("WidgetUpdater", "Scheduled next update at minute boundary: ${nextMinute - currentTimeMillis}ms from now")
         } catch (e: Exception) {
-            Log.e("WidgetUpdater", "Failed to schedule quick widget update", e)
+            Log.e("WidgetUpdater", "Failed to schedule widget update", e)
         }
     }
 
@@ -173,7 +151,7 @@ object WidgetUpdater {
                     Log.e("WidgetUpdater", "Error updating widgets", e)
                 } finally {
                     // Schedule the next update
-                    scheduleQuickUpdate(context)
+                    scheduleMinuteAlignedUpdate(context)
 
                     // Release the wake lock
                     if (wakeLock.isHeld) {

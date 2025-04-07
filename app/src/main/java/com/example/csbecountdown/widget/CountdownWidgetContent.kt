@@ -39,6 +39,8 @@ private val LIGHT_PRIMARY_CONTAINER = Color(0xFFD8E2FF)
 private val LIGHT_ON_PRIMARY_CONTAINER = Color(0xFF001A41)
 private val LIGHT_SECONDARY_CONTAINER = Color(0xFFD7E3F7)
 private val LIGHT_ON_SECONDARY_CONTAINER = Color(0xFF101C2B)
+private val LIGHT_TERTIARY_CONTAINER = Color(0xFFF2DAFF)
+private val LIGHT_ON_TERTIARY_CONTAINER = Color(0xFF251431)
 
 @Composable
 fun CountdownWidgetContent() {
@@ -60,7 +62,7 @@ fun CountdownWidgetContent() {
         Column(
             modifier = GlanceModifier
                 .fillMaxSize()
-                .padding(12.dp),
+                .padding(16.dp),
             horizontalAlignment = Alignment.Horizontal.CenterHorizontally,
             verticalAlignment = Alignment.Vertical.CenterVertically
         ) {
@@ -103,7 +105,7 @@ fun CountdownWidgetContent() {
                     textColor = LIGHT_ON_PRIMARY_CONTAINER
                 )
 
-                Spacer(modifier = GlanceModifier.width(4.dp))
+                Spacer(modifier = GlanceModifier.width(8.dp))
 
                 // Hours
                 CountdownUnit(
@@ -114,37 +116,26 @@ fun CountdownWidgetContent() {
                     textColor = LIGHT_ON_SECONDARY_CONTAINER
                 )
 
-                Spacer(modifier = GlanceModifier.width(4.dp))
+                Spacer(modifier = GlanceModifier.width(8.dp))
 
                 // Minutes
                 CountdownUnit(
                     value = timeLeft.minutes,
-                    label = "Min",
+                    label = "Minutes",
                     modifier = GlanceModifier.defaultWeight(),
-                    containerColor = LIGHT_PRIMARY_CONTAINER,
-                    textColor = LIGHT_ON_PRIMARY_CONTAINER
-                )
-
-                Spacer(modifier = GlanceModifier.width(4.dp))
-
-                // Seconds
-                CountdownUnit(
-                    value = timeLeft.seconds,
-                    label = "Sec",
-                    modifier = GlanceModifier.defaultWeight(),
-                    containerColor = LIGHT_SECONDARY_CONTAINER,
-                    textColor = LIGHT_ON_SECONDARY_CONTAINER
+                    containerColor = LIGHT_TERTIARY_CONTAINER,
+                    textColor = LIGHT_ON_TERTIARY_CONTAINER
                 )
             }
 
-            Spacer(modifier = GlanceModifier.height(4.dp))
+            Spacer(modifier = GlanceModifier.height(6.dp))
 
-            // Last updated indicator to show freshness
+            // Updated information
             Text(
-                text = "Tap to refresh",
+                text = "Updates every minute",
                 style = TextStyle(
                     color = ColorProvider(LIGHT_ON_SURFACE),
-                    fontSize = 9.sp,
+                    fontSize = 10.sp,
                     textAlign = TextAlign.Center
                 ),
                 modifier = GlanceModifier.fillMaxWidth()
@@ -169,7 +160,7 @@ fun CountdownUnit(
         // Box with countdown digit
         Box(
             modifier = GlanceModifier
-                .size(width = 48.dp, height = 48.dp)
+                .size(width = 56.dp, height = 56.dp)
                 .cornerRadius(12.dp)
                 .background(containerColor)
                 .padding(4.dp),
@@ -179,20 +170,20 @@ fun CountdownUnit(
                 text = String.format("%02d", value),
                 style = TextStyle(
                     color = ColorProvider(textColor),
-                    fontSize = 18.sp,
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
                 )
             )
         }
 
-        Spacer(modifier = GlanceModifier.height(2.dp))
+        Spacer(modifier = GlanceModifier.height(4.dp))
 
         Text(
             text = label,
             style = TextStyle(
                 color = ColorProvider(LIGHT_ON_SURFACE),
-                fontSize = 10.sp,
+                fontSize = 11.sp,
                 textAlign = TextAlign.Center
             )
         )
