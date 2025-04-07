@@ -1,18 +1,18 @@
 package com.example.csbecountdown.widget
 
 import androidx.compose.ui.graphics.Color
-import androidx.glance.color.ColorProvider
+import androidx.glance.unit.ColorProvider
 
 /**
  * Creates a ColorProvider from a single Color
  */
 fun colorProvider(color: Color): ColorProvider {
-    return ColorProvider(color, color)
+    return ColorProvider(color)
 }
 
 /**
- * Creates a ColorProvider with different day/night colors
+ * Creates a ColorProvider from a resource ID
  */
-fun colorProvider(dayColor: Color, nightColor: Color): ColorProvider {
-    return ColorProvider(dayColor, nightColor)
+fun colorProviderResource(resId: Int): ColorProvider {
+    return ColorProvider(resId)
 }

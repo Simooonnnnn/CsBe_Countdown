@@ -26,16 +26,17 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
+import androidx.glance.unit.ColorProvider
 import com.example.csbecountdown.MainActivity
 import java.util.Calendar
 import java.util.TimeZone
 import java.util.concurrent.TimeUnit
 
-// Basic light theme colors as integer literals to avoid any dependency issues
-private val LIGHT_SURFACE = 0xFFFDFBFF
-private val LIGHT_ON_SURFACE = 0xFF1A1C1E
-private val LIGHT_PRIMARY_CONTAINER = 0xFFD8E2FF
-private val LIGHT_ON_PRIMARY_CONTAINER = 0xFF001A41
+// Basic light theme colors as Color objects
+private val LIGHT_SURFACE = Color(0xFFFDFBFF)
+private val LIGHT_ON_SURFACE = Color(0xFF1A1C1E)
+private val LIGHT_PRIMARY_CONTAINER = Color(0xFFD8E2FF)
+private val LIGHT_ON_PRIMARY_CONTAINER = Color(0xFF001A41)
 
 @Composable
 fun CountdownWidgetContent() {
@@ -51,7 +52,7 @@ fun CountdownWidgetContent() {
         modifier = GlanceModifier
             .fillMaxSize()
             .cornerRadius(16.dp)
-            .background(color = LIGHT_SURFACE) // Using the explicitly named parameter
+            .background(LIGHT_SURFACE)
             .clickable(actionStartActivity<MainActivity>())
     ) {
         Column(
@@ -64,7 +65,7 @@ fun CountdownWidgetContent() {
             Text(
                 text = "CsBe Countdown",
                 style = TextStyle(
-                    color = LIGHT_ON_SURFACE,
+                    color = ColorProvider(LIGHT_ON_SURFACE),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
                     textAlign = TextAlign.Center
@@ -77,7 +78,7 @@ fun CountdownWidgetContent() {
             Text(
                 text = "July 4th, 12:00 PM (UTC+1)",
                 style = TextStyle(
-                    color = LIGHT_ON_SURFACE,
+                    color = ColorProvider(LIGHT_ON_SURFACE),
                     fontSize = 12.sp,
                     textAlign = TextAlign.Center
                 ),
@@ -143,19 +144,19 @@ fun CountdownUnit(
         horizontalAlignment = Alignment.Horizontal.CenterHorizontally,
         verticalAlignment = Alignment.Vertical.CenterVertically
     ) {
-        // Box with countdown digit - using Int colors
+        // Box with countdown digit
         Box(
             modifier = GlanceModifier
                 .size(width = 48.dp, height = 48.dp)
                 .cornerRadius(16.dp)
-                .background(color = LIGHT_PRIMARY_CONTAINER) // Using the explicitly named parameter
+                .background(LIGHT_PRIMARY_CONTAINER)
                 .padding(4.dp),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = String.format("%02d", value),
                 style = TextStyle(
-                    color = LIGHT_ON_PRIMARY_CONTAINER,
+                    color = ColorProvider(LIGHT_ON_PRIMARY_CONTAINER),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
@@ -168,7 +169,7 @@ fun CountdownUnit(
         Text(
             text = label,
             style = TextStyle(
-                color = LIGHT_ON_SURFACE,
+                color = ColorProvider(LIGHT_ON_SURFACE),
                 fontSize = 10.sp,
                 textAlign = TextAlign.Center
             )
