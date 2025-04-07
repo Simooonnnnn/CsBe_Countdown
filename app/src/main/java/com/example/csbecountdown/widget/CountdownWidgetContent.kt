@@ -42,7 +42,7 @@ private val LIGHT_ON_PRIMARY_CONTAINER = Color(0xFF001A41)
 fun CountdownWidgetContent() {
     val context = LocalContext.current
 
-    // Calculate time left until July 4th at 12:00 (UTC+1)
+    // Calculate time left until July 4th at 12:00 (UTC+2)
     val timeLeft = calculateTimeLeft()
 
     Log.d("CountdownWidget", "Rendering widget with timeLeft: $timeLeft")
@@ -76,7 +76,7 @@ fun CountdownWidgetContent() {
             Spacer(modifier = GlanceModifier.height(8.dp))
 
             Text(
-                text = "July 4th, 12:00 PM (UTC+1)",
+                text = "July 4th, 12:00 PM (UTC+2)",
                 style = TextStyle(
                     color = ColorProvider(LIGHT_ON_SURFACE),
                     fontSize = 12.sp,
@@ -186,9 +186,9 @@ data class TimeLeft(
 
 fun calculateTimeLeft(): TimeLeft {
     return try {
-        // Target date: July 4th at 12:00 (UTC+1)
+        // Target date: July 4th at 12:00 (UTC+2)
         val targetDate = Calendar.getInstance().apply {
-            timeZone = TimeZone.getTimeZone("GMT+1")
+            timeZone = TimeZone.getTimeZone("GMT+2")
             set(Calendar.MONTH, Calendar.JULY)
             set(Calendar.DAY_OF_MONTH, 4)
             set(Calendar.HOUR_OF_DAY, 12)

@@ -136,7 +136,7 @@ fun CountdownApp(viewModel: CountdownViewModel = viewModel()) {
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Text(
-                            text = "July 4th, 12:00 PM (UTC+1)",
+                            text = "July 4th, 12:00 PM (UTC+2)",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -279,7 +279,7 @@ data class TimeLeft(
 class CountdownViewModel : ViewModel() {
     // Target date: July 4th at 12:00 (UTC+1)
     private val targetDate = Calendar.getInstance().apply {
-        timeZone = TimeZone.getTimeZone("GMT+1")
+        timeZone = TimeZone.getTimeZone("GMT+2")
         set(Calendar.MONTH, Calendar.JULY)
         set(Calendar.DAY_OF_MONTH, 4)
         set(Calendar.HOUR_OF_DAY, 12)
