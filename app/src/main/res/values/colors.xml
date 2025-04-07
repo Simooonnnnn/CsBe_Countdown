@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Material 3 color scheme - Vibrant blue theme -->
+    <color name="seed">#006AF5</color>
+
+    <!-- Primary colors -->
+    <color name="primary">#006AF5</color>
+    <color name="on_primary">#FFFFFF</color>
+    <color name="primary_container">#D8E2FF</color>
+    <color name="on_primary_container">#001A41</color>
+
+    <!-- Secondary colors -->
+    <color name="secondary">#535F70</color>
+    <color name="on_secondary">#FFFFFF</color>
+    <color name="secondary_container">#D7E3F7</color>
+    <color name="on_secondary_container">#101C2B</color>
+
+    <!-- Tertiary colors -->
+    <color name="tertiary">#6B5778</color>
+    <color name="on_tertiary">#FFFFFF</color>
+    <color name="tertiary_container">#F2DAFF</color>
+    <color name="on_tertiary_container">#251431</color>
+
+    <!-- Error colors -->
+    <color name="error">#BA1A1A</color>
+    <color name="on_error">#FFFFFF</color>
+    <color name="error_container">#FFDAD6</color>
+    <color name="on_error_container">#410002</color>
+
+    <!-- Surface colors -->
+    <color name="surface">#FDFCFF</color>
+    <color name="on_surface">#1A1C1E</color>
+    <color name="surface_variant">#DFE2EB</color>
+    <color name="on_surface_variant">#43474E</color>
+
+    <!-- Background colors -->
+    <color name="background">#FDFCFF</color>
+    <color name="on_background">#1A1C1E</color>
+
+    <!-- Additional surface tones -->
+    <color name="surface_bright">#FDFCFF</color>
+    <color name="surface_dim">#DAE1EB</color>
+    <color name="surface_container">#F2F4FC</color>
+    <color name="surface_container_high">#E7ECF5</color>
+    <color name="surface_container_highest">#E1E6EF</color>
+    <color name="surface_container_low">#F8FAFF</color>
+    <color name="surface_container_lowest">#FFFFFF</color>
+
+    <!-- Other colors -->
+    <color name="outline">#73777F</color>
+    <color name="outline_variant">#C3C7CF</color>
+    <color name="inverse_surface">#2F3033</color>
+    <color name="inverse_on_surface">#F1F0F4</color>
+    <color name="inverse_primary">#ADC6FF</color>
+    <color name="scrim">#000000</color>
+    <color name="shadow">#000000</color>
+</resources>
