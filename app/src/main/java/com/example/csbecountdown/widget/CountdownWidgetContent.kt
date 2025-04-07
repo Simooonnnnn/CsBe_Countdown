@@ -28,19 +28,24 @@ import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.example.csbecountdown.MainActivity
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 import java.util.TimeZone
 import java.util.concurrent.TimeUnit
 
-// Basic light theme colors as Color objects
-private val LIGHT_SURFACE = Color(0xFFFDFBFF)
+// Enhanced light theme colors as Color objects
+private val LIGHT_SURFACE = Color(0xFFF8F9FF)
 private val LIGHT_ON_SURFACE = Color(0xFF1A1C1E)
+private val LIGHT_PRIMARY = Color(0xFF006AF5)
 private val LIGHT_PRIMARY_CONTAINER = Color(0xFFD8E2FF)
 private val LIGHT_ON_PRIMARY_CONTAINER = Color(0xFF001A41)
 private val LIGHT_SECONDARY_CONTAINER = Color(0xFFD7E3F7)
 private val LIGHT_ON_SECONDARY_CONTAINER = Color(0xFF101C2B)
 private val LIGHT_TERTIARY_CONTAINER = Color(0xFFF2DAFF)
 private val LIGHT_ON_TERTIARY_CONTAINER = Color(0xFF251431)
+private val LIGHT_OUTLINE = Color(0xFFBDBFCE)
 
 @Composable
 fun CountdownWidgetContent() {
@@ -48,14 +53,16 @@ fun CountdownWidgetContent() {
 
     // Calculate time left until July 4th at 12:00 (UTC+2)
     val timeLeft = calculateTimeLeft()
-
     Log.d("CountdownWidget", "Rendering widget with timeLeft: $timeLeft")
 
-    // Create the entire widget layout with basic colors
+    // Get current date formatted nicely
+    val currentDate = SimpleDateFormat("EEEE, MMM d", Locale.getDefault()).format(Date())
+
+    // Create the entire widget layout with enhanced colors and styling
     Box(
         modifier = GlanceModifier
             .fillMaxSize()
-            .cornerRadius(16.dp)
+            .cornerRadius(20.dp)
             .background(LIGHT_SURFACE)
             .clickable(actionStartActivity<MainActivity>())
     ) {
@@ -63,34 +70,62 @@ fun CountdownWidgetContent() {
             modifier = GlanceModifier
                 .fillMaxSize()
                 .padding(16.dp),
-            horizontalAlignment = Alignment.Horizontal.CenterHorizontally,
-            verticalAlignment = Alignment.Vertical.CenterVertically
+            horizontalAlignment = Alignment.Horizontal.CenterHorizontally
         ) {
-            Text(
-                text = "CsBe Countdown",
-                style = TextStyle(
-                    color = ColorProvider(LIGHT_ON_SURFACE),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    textAlign = TextAlign.Center
-                ),
-                modifier = GlanceModifier.fillMaxWidth()
-            )
+            // Header with title and date
+            Row(
+                modifier = GlanceModifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp),
+                verticalAlignment = Alignment.Vertical.CenterVertically
+            ) {
+                // App title
+                Text(
+                    text = "CsBe Countdown",
+                    style = TextStyle(
+                        color = ColorProvider(LIGHT_PRIMARY),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Start
+                    ),
+                    modifier = GlanceModifier.defaultWeight()
+                )
 
-            Spacer(modifier = GlanceModifier.height(4.dp))
+                // Current date
+                Text(
+                    text = currentDate,
+                    style = TextStyle(
+                        color = ColorProvider(LIGHT_ON_SURFACE),
+                        fontSize = 14.sp,
+                        textAlign = TextAlign.End
+                    ),
+                    modifier = GlanceModifier
+                )
+            }
 
-            Text(
-                text = "July 4th, 12:00 PM (UTC+2)",
-                style = TextStyle(
-                    color = ColorProvider(LIGHT_ON_SURFACE),
-                    fontSize = 12.sp,
-                    textAlign = TextAlign.Center
-                ),
-                modifier = GlanceModifier.fillMaxWidth()
-            )
+            // Target date information
+            Box(
+                modifier = GlanceModifier
+                    .fillMaxWidth()
+                    .background(LIGHT_PRIMARY_CONTAINER.copy(alpha = 0.5f))
+                    .cornerRadius(12.dp)
+                    .padding(vertical = 6.dp, horizontal = 12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "July 4th, 12:00 PM (UTC+2)",
+                    style = TextStyle(
+                        color = ColorProvider(LIGHT_ON_PRIMARY_CONTAINER),
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        textAlign = TextAlign.Center
+                    )
+                )
+            }
 
-            Spacer(modifier = GlanceModifier.height(12.dp))
+            Spacer(modifier = GlanceModifier.height(16.dp))
 
+            // Countdown row with improved styling
             Row(
                 modifier = GlanceModifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.Horizontal.CenterHorizontally,
@@ -128,18 +163,36 @@ fun CountdownWidgetContent() {
                 )
             }
 
-            Spacer(modifier = GlanceModifier.height(6.dp))
+            Spacer(modifier = GlanceModifier.height(8.dp))
 
-            // Updated information
-            Text(
-                text = "Updates every minute",
-                style = TextStyle(
-                    color = ColorProvider(LIGHT_ON_SURFACE),
-                    fontSize = 10.sp,
-                    textAlign = TextAlign.Center
-                ),
-                modifier = GlanceModifier.fillMaxWidth()
-            )
+            // Status info at the bottom
+            Box(
+                modifier = GlanceModifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = if (timeLeft.days > 30) {
+                        "A long wait ahead..."
+                    } else if (timeLeft.days > 7) {
+                        "Getting closer!"
+                    } else if (timeLeft.days > 0) {
+                        "Just ${timeLeft.days} days to go!"
+                    } else if (timeLeft.hours > 0) {
+                        "Hours remaining!"
+                    } else if (timeLeft.minutes > 0) {
+                        "Almost there!"
+                    } else {
+                        "It's happening now!"
+                    },
+                    style = TextStyle(
+                        color = ColorProvider(LIGHT_ON_SURFACE),
+                        fontSize = 12.sp,
+                        textAlign = TextAlign.Center
+                    )
+                )
+            }
         }
     }
 }
@@ -157,11 +210,11 @@ fun CountdownUnit(
         horizontalAlignment = Alignment.Horizontal.CenterHorizontally,
         verticalAlignment = Alignment.Vertical.CenterVertically
     ) {
-        // Box with countdown digit
+        // Box with countdown digit with enhanced styling
         Box(
             modifier = GlanceModifier
-                .size(width = 56.dp, height = 56.dp)
-                .cornerRadius(12.dp)
+                .size(width = 60.dp, height = 60.dp)
+                .cornerRadius(16.dp)
                 .background(containerColor)
                 .padding(4.dp),
             contentAlignment = Alignment.Center
@@ -170,20 +223,21 @@ fun CountdownUnit(
                 text = String.format("%02d", value),
                 style = TextStyle(
                     color = ColorProvider(textColor),
-                    fontSize = 20.sp,
+                    fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
                 )
             )
         }
 
-        Spacer(modifier = GlanceModifier.height(4.dp))
+        Spacer(modifier = GlanceModifier.height(6.dp))
 
         Text(
             text = label,
             style = TextStyle(
                 color = ColorProvider(LIGHT_ON_SURFACE),
-                fontSize = 11.sp,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Center
             )
         )
