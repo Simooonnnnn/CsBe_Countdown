@@ -9,6 +9,9 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" /> <!-- For wake locks -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" /> <!-- For potential foreground service -->
 
+    <!-- Add notification permissions -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" /> <!-- For Android 13+ -->
+
     <application
         android:name=".CsBeCountdownApp"
         android:allowBackup="true"
@@ -58,7 +61,7 @@
             </intent-filter>
         </receiver>
 
-        <!-- Initialize WorkManager with our custom configuration -->
+        <!-- App Startup Configuration -->
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"
@@ -68,6 +71,12 @@
                 android:name="androidx.work.WorkManagerInitializer"
                 android:value="androidx.startup"
                 tools:node="remove" />
+            <meta-data
+                android:name="com.example.csbecountdown.notifications.WorkManagerInitializer"
+                android:value="androidx.startup" />
+            <meta-data
+                android:name="com.example.csbecountdown.notifications.NotificationInitializer"
+                android:value="androidx.startup" />
         </provider>
 
     </application>

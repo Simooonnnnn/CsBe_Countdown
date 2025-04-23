@@ -50,6 +50,25 @@ android {
 }
 
 dependencies {
+    // Add these dependencies to your app-level build.gradle.kts file
+
+// App Startup for component initialization
+    implementation("androidx.startup:startup-runtime:1.1.1")
+
+// This should already be present
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
+    // WorkManager for scheduling notifications
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
+
+// App Startup for component initialization
+    implementation("androidx.startup:startup-runtime:1.1.1")
+
+// Lifecycle components
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
+
+// Animation for Settings UI
+    implementation("androidx.compose.animation:animation:1.6.4")
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
     implementation("androidx.activity:activity-compose:1.8.2")

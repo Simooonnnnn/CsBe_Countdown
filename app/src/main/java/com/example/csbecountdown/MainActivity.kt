@@ -1,8 +1,18 @@
 package com.example.csbecountdown
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,16 +25,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material.icons.filled.Timer        // Import Timer icon (filled style)
-import androidx.compose.material.icons.outlined.Timer      // Import Timer icon (outlined style)
+import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -37,19 +49,44 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.csbecountdown.settings.SettingsViewModel
 import com.example.csbecountdown.ui.theme.CsBeCountdownTheme
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.TimeZone
 import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity() {
+
+    // Request launcher for notification permission
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            // Permission granted
+            Toast.makeText(this, "Notification permission granted", Toast.LENGTH_SHORT).show()
+        } else {
+            // Permission denied
+            Toast.makeText(this,
+                "Notification permission denied. You won't receive countdown alerts.",
+                Toast.LENGTH_LONG).show()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Check notification permission on Android 13+
+        checkNotificationPermission()
+
         setContent {
             CsBeCountdownTheme {
                 Surface(
@@ -57,6 +94,35 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     CountdownApp()
+                }
+            }
+        }
+    }
+
+    /**
+     * Check and request notification permission if needed
+     */
+    private fun checkNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            when {
+                ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED -> {
+                    // Permission already granted
+                }
+                shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS) -> {
+                    // Show rationale and then request
+                    Toast.makeText(
+                        this,
+                        "Notification permission is needed to receive countdown alerts",
+                        Toast.LENGTH_LONG
+                    ).show()
+                    requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+                else -> {
+                    // First time asking for permission
+                    requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                 }
             }
         }
@@ -72,8 +138,11 @@ object AppIcons {
 }
 
 @Composable
-fun CountdownApp(viewModel: CountdownViewModel = viewModel()) {
-    val timeLeft by viewModel.timeLeftState
+fun CountdownApp(
+    countdownViewModel: CountdownViewModel = viewModel(),
+    settingsViewModel: SettingsViewModel = viewModel()
+) {
+    val timeLeft by countdownViewModel.timeLeftState
     var selectedTab by remember { mutableIntStateOf(0) }
 
     Column(
@@ -87,7 +156,7 @@ fun CountdownApp(viewModel: CountdownViewModel = viewModel()) {
         ) {
             when (selectedTab) {
                 0 -> CountdownScreen(timeLeft)
-                1 -> SettingsScreen()
+                1 -> SettingsScreen(settingsViewModel)
             }
         }
 
@@ -194,49 +263,6 @@ fun CountdownDigit(value: Long, label: String) {
     }
 }
 
-@Composable
-fun SettingsScreen() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Spacer(modifier = Modifier.height(48.dp))
-
-        // Settings header
-        Text(
-            text = "Settings",
-            style = MaterialTheme.typography.headlineMedium.copy(
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 22.sp
-            ),
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-
-        Spacer(modifier = Modifier.height(40.dp))
-
-        // Placeholder content
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "Coming soon",
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    fontWeight = FontWeight.Normal,
-                    fontSize = 16.sp
-                ),
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-            )
-        }
-    }
-}
-
 data class TimeLeft(
     val days: Long = 0,
     val hours: Long = 0,
@@ -289,44 +315,5 @@ class CountdownViewModel : ViewModel() {
         val seconds = TimeUnit.MILLISECONDS.toSeconds(difference) % 60
 
         return TimeLeft(days, hours, minutes, seconds)
-    }
-}
-
-// Preview Composables
-@Preview(showBackground = true)
-@Composable
-fun CountdownScreenPreview() {
-    CsBeCountdownTheme {
-        CountdownScreen(
-            timeLeft = TimeLeft(
-                days = 77,
-                hours = 23,
-                minutes = 33,
-                seconds = 48
-            )
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun SettingsScreenPreview() {
-    CsBeCountdownTheme {
-        SettingsScreen()
-    }
-}
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun CountdownAppPreview() {
-    // Create a preview with static data
-    val previewViewModel = CountdownViewModel()
-    // Use reflection to set the private field for preview
-    val field = CountdownViewModel::class.java.getDeclaredField("_timeLeftState")
-    field.isAccessible = true
-    field.set(previewViewModel, mutableStateOf(TimeLeft(77, 23, 33, 48)))
-
-    CsBeCountdownTheme {
-        CountdownApp(viewModel = previewViewModel)
     }
 }

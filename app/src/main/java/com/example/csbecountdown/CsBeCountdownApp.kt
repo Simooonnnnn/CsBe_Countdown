@@ -4,9 +4,15 @@ import android.app.Application
 import android.content.Intent
 import android.util.Log
 import androidx.work.Configuration
+import com.example.csbecountdown.notifications.CountdownNotificationManager
+import com.example.csbecountdown.settings.NotificationPreferenceManager
 import com.example.csbecountdown.widget.WidgetUpdater
 
 class CsBeCountdownApp : Application(), Configuration.Provider {
+
+    // For notifications management
+    private lateinit var notificationManager: CountdownNotificationManager
+    private lateinit var preferenceManager: NotificationPreferenceManager
 
     override fun onCreate() {
         super.onCreate()
@@ -14,6 +20,16 @@ class CsBeCountdownApp : Application(), Configuration.Provider {
 
         // Initialize WorkManager with our configuration
         androidx.work.WorkManager.initialize(this, workManagerConfiguration)
+
+        // Initialize notification components
+        notificationManager = CountdownNotificationManager(this)
+        preferenceManager = NotificationPreferenceManager(this)
+
+        // Check if notifications need to be scheduled
+        if (preferenceManager.getNotificationsEnabled()) {
+            Log.d("CsBeCountdownApp", "Notifications enabled, scheduling")
+            notificationManager.scheduleNotifications()
+        }
 
         // Initialize widget updates with improved mechanism
         try {
