@@ -1,115 +1,135 @@
 package com.example.csbecountdown.widget
 
 import android.content.Context
-import android.os.Build
-import androidx.compose.ui.graphics.Color
+import android.content.res.Configuration
+import android.graphics.Color
+import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.core.content.ContextCompat
-import com.example.csbecountdown.ui.theme.md_theme_dark_background
-import com.example.csbecountdown.ui.theme.md_theme_dark_onPrimaryContainer
-import com.example.csbecountdown.ui.theme.md_theme_dark_onSurface
-import com.example.csbecountdown.ui.theme.md_theme_dark_onSurfaceVariant
-import com.example.csbecountdown.ui.theme.md_theme_dark_primaryContainer
-import com.example.csbecountdown.ui.theme.md_theme_dark_surface
-import com.example.csbecountdown.ui.theme.md_theme_light_background
-import com.example.csbecountdown.ui.theme.md_theme_light_onPrimaryContainer
-import com.example.csbecountdown.ui.theme.md_theme_light_onSurface
-import com.example.csbecountdown.ui.theme.md_theme_light_onSurfaceVariant
-import com.example.csbecountdown.ui.theme.md_theme_light_primaryContainer
-import com.example.csbecountdown.ui.theme.md_theme_light_surface
 
 /**
- * Simple color helper for Material You integration
+ * Helper for Material You dynamic colors in widgets
  */
 object DynamicColorHelper {
+    // Light mode colors - minimalist style
+    private val LIGHT_BACKGROUND = ComposeColor(0xFFF6F6F6)
+    private val LIGHT_ON_BACKGROUND = ComposeColor(0xFF1A1C1E)
+    private val LIGHT_PRIMARY = ComposeColor(0xFF006AF5)
+    private val LIGHT_PRIMARY_CONTAINER = ComposeColor(0xFFD8E2FF)
+    private val LIGHT_ON_PRIMARY_CONTAINER = ComposeColor(0xFF001A41)
 
-    // Get dynamic color or fallback to predefined theme colors based on dark mode
-    fun getColorForMode(
-        context: Context,
-        lightColor: Color,
-        darkColor: Color,
-        colorResourceId: Int,
-        isDarkTheme: Boolean
-    ): Color {
-        // On Android 12+, try to use Material You dynamic colors
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+    // Dark mode colors
+    private val DARK_BACKGROUND = ComposeColor(0xFF121212)
+    private val DARK_ON_BACKGROUND = ComposeColor(0xFFE2E2E6)
+    private val DARK_PRIMARY = ComposeColor(0xFFADC6FF)
+    private val DARK_PRIMARY_CONTAINER = ComposeColor(0xFF004395)
+    private val DARK_ON_PRIMARY_CONTAINER = ComposeColor(0xFFD8E2FF)
+
+    /**
+     * Check if device is in dark theme
+     */
+    fun isDarkTheme(context: Context): Boolean {
+        return context.resources.configuration.uiMode and
+                Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+    }
+
+    /**
+     * Get background color
+     */
+    fun getSurface(context: Context): ComposeColor {
+        val isDark = isDarkTheme(context)
+
+        // For widgets, we'll try to fetch a system accent color if available
+        return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
             try {
-                // Try to get the color from resources
-                val dynamicColor = ContextCompat.getColor(context, colorResourceId)
-                Color(dynamicColor)
+                // Try to get dynamic color using resource name
+                val resourceId = context.resources.getIdentifier(
+                    if (isDark) "system_neutral1_900" else "system_neutral1_50",
+                    "color", "android"
+                )
+
+                if (resourceId != 0) {
+                    val dynamicColor = ContextCompat.getColor(context, resourceId)
+                    ComposeColor(dynamicColor)
+                } else {
+                    // Fallback to predefined colors
+                    if (isDark) DARK_BACKGROUND else LIGHT_BACKGROUND
+                }
             } catch (e: Exception) {
-                // Fallback to predefined colors if dynamic colors are not available
-                if (isDarkTheme) darkColor else lightColor
+                // Fallback to predefined colors
+                if (isDark) DARK_BACKGROUND else LIGHT_BACKGROUND
             }
         } else {
-            // For older Android versions, use predefined colors
-            if (isDarkTheme) darkColor else lightColor
+            // For older Android versions
+            if (isDark) DARK_BACKGROUND else LIGHT_BACKGROUND
         }
     }
 
-    // Helper function to check if we're in dark mode
-    fun isDarkTheme(context: Context): Boolean {
-        return context.resources.configuration.uiMode and
-                android.content.res.Configuration.UI_MODE_NIGHT_MASK ==
-                android.content.res.Configuration.UI_MODE_NIGHT_YES
+    /**
+     * Get text color for main content
+     */
+    fun getOnSurface(context: Context): ComposeColor {
+        return if (isDarkTheme(context)) DARK_ON_BACKGROUND else LIGHT_ON_BACKGROUND
     }
 
-    // Get surface color
-    fun getSurface(context: Context): Color {
+    /**
+     * Get container color for elements
+     */
+    fun getPrimaryContainer(context: Context): ComposeColor {
         val isDark = isDarkTheme(context)
-        return getColorForMode(
-            context,
-            md_theme_light_surface,
-            md_theme_dark_surface,
-            android.R.color.system_accent1_50,
-            isDark
-        )
+
+        return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            try {
+                // Try to get dynamic color
+                val resourceId = context.resources.getIdentifier(
+                    if (isDark) "system_accent1_700" else "system_accent1_100",
+                    "color", "android"
+                )
+
+                if (resourceId != 0) {
+                    val dynamicColor = ContextCompat.getColor(context, resourceId)
+                    ComposeColor(dynamicColor)
+                } else {
+                    // Fallback
+                    if (isDark) DARK_PRIMARY_CONTAINER else LIGHT_PRIMARY_CONTAINER
+                }
+            } catch (e: Exception) {
+                // Fallback
+                if (isDark) DARK_PRIMARY_CONTAINER else LIGHT_PRIMARY_CONTAINER
+            }
+        } else {
+            // For older Android versions
+            if (isDark) DARK_PRIMARY_CONTAINER else LIGHT_PRIMARY_CONTAINER
+        }
     }
 
-    // Get onSurface color
-    fun getOnSurface(context: Context): Color {
+    /**
+     * Get text color for container elements
+     */
+    fun getOnPrimaryContainer(context: Context): ComposeColor {
         val isDark = isDarkTheme(context)
-        return getColorForMode(
-            context,
-            md_theme_light_onSurface,
-            md_theme_dark_onSurface,
-            android.R.color.system_accent1_900,
-            isDark
-        )
-    }
 
-    // Get onSurfaceVariant color
-    fun getOnSurfaceVariant(context: Context): Color {
-        val isDark = isDarkTheme(context)
-        return getColorForMode(
-            context,
-            md_theme_light_onSurfaceVariant,
-            md_theme_dark_onSurfaceVariant,
-            android.R.color.system_accent1_700,
-            isDark
-        )
-    }
+        return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            try {
+                // Try to get dynamic color
+                val resourceId = context.resources.getIdentifier(
+                    if (isDark) "system_accent1_100" else "system_accent1_900",
+                    "color", "android"
+                )
 
-    // Get primaryContainer color
-    fun getPrimaryContainer(context: Context): Color {
-        val isDark = isDarkTheme(context)
-        return getColorForMode(
-            context,
-            md_theme_light_primaryContainer,
-            md_theme_dark_primaryContainer,
-            android.R.color.system_accent1_100,
-            isDark
-        )
-    }
-
-    // Get onPrimaryContainer color
-    fun getOnPrimaryContainer(context: Context): Color {
-        val isDark = isDarkTheme(context)
-        return getColorForMode(
-            context,
-            md_theme_light_onPrimaryContainer,
-            md_theme_dark_onPrimaryContainer,
-            android.R.color.system_accent1_900,
-            isDark
-        )
+                if (resourceId != 0) {
+                    val dynamicColor = ContextCompat.getColor(context, resourceId)
+                    ComposeColor(dynamicColor)
+                } else {
+                    // Fallback
+                    if (isDark) DARK_ON_PRIMARY_CONTAINER else LIGHT_ON_PRIMARY_CONTAINER
+                }
+            } catch (e: Exception) {
+                // Fallback
+                if (isDark) DARK_ON_PRIMARY_CONTAINER else LIGHT_ON_PRIMARY_CONTAINER
+            }
+        } else {
+            // For older Android versions
+            if (isDark) DARK_ON_PRIMARY_CONTAINER else LIGHT_ON_PRIMARY_CONTAINER
+        }
     }
 }

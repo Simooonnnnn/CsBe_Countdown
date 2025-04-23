@@ -10,10 +10,17 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
+
+// Updated background colors for the minimalist UI (without conflicting with existing declarations)
+private val light_custom_background = Color(0xFFF6F6F6)
+private val light_custom_surface = Color(0xFFF8F9FF)
+private val dark_custom_background = Color(0xFF121212)
+private val dark_custom_surface = Color(0xFF1F1F1F)
 
 // Light theme color scheme
 private val LightColorScheme = lightColorScheme(
@@ -33,9 +40,9 @@ private val LightColorScheme = lightColorScheme(
     onError = md_theme_light_onError,
     errorContainer = md_theme_light_errorContainer,
     onErrorContainer = md_theme_light_onErrorContainer,
-    background = md_theme_light_background,
+    background = light_custom_background, // Use the custom background color
     onBackground = md_theme_light_onBackground,
-    surface = md_theme_light_surface,
+    surface = light_custom_surface, // Use the custom surface color
     onSurface = md_theme_light_onSurface,
     surfaceVariant = md_theme_light_surfaceVariant,
     onSurfaceVariant = md_theme_light_onSurfaceVariant,
@@ -65,9 +72,9 @@ private val DarkColorScheme = darkColorScheme(
     onError = md_theme_dark_onError,
     errorContainer = md_theme_dark_errorContainer,
     onErrorContainer = md_theme_dark_onErrorContainer,
-    background = md_theme_dark_background,
+    background = dark_custom_background, // Use the custom background color
     onBackground = md_theme_dark_onBackground,
-    surface = md_theme_dark_surface,
+    surface = dark_custom_surface, // Use the custom surface color
     onSurface = md_theme_dark_onSurface,
     surfaceVariant = md_theme_dark_surfaceVariant,
     onSurfaceVariant = md_theme_dark_onSurfaceVariant,
@@ -99,7 +106,9 @@ fun CsBeCountdownTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.surface.toArgb()
+            // Set status bar color to match the app background
+            window.statusBarColor = colorScheme.background.toArgb()
+            // Use light or dark icons based on the theme
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
         }
     }

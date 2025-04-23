@@ -3,13 +3,10 @@ package com.example.csbecountdown.widget
 import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.PowerManager
 import android.util.Log
-import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.updateAll
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -143,8 +140,11 @@ object WidgetUpdater {
             val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
             coroutineScope.launch {
                 try {
-                    // Update all widget instances
-                    CountdownWidget().updateAll(context)
+                    // Update all widget instances with the specific CountdownWidget class
+                    // Ensure the CountdownWidget is imported from the correct package
+                    val widget = CountdownWidget()
+                    widget.updateAll(context)
+
                     successfulUpdates++
                     Log.d("WidgetUpdater", "Successfully updated widgets")
                 } catch (e: Exception) {

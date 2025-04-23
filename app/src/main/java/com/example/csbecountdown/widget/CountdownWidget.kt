@@ -10,6 +10,9 @@ import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.datastore.preferences.core.longPreferencesKey
 
+/**
+ * Material-themed countdown widget
+ */
 class CountdownWidget : GlanceAppWidget() {
 
     // Define a preferences key for the last update timestamp
@@ -31,7 +34,7 @@ class CountdownWidget : GlanceAppWidget() {
             Log.e("CountdownWidget", "Failed to update widget state", e)
         }
 
-        // Provide the content - our Material You enabled content
+        // Provide the Material-styled content
         provideContent {
             CountdownWidgetContent()
         }
@@ -41,7 +44,9 @@ class CountdownWidget : GlanceAppWidget() {
     }
 }
 
-// This receiver is what Android system calls when the widget is added to the home screen
+/**
+ * Widget receiver that handles widget lifecycle events
+ */
 class CountdownWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = CountdownWidget()
 
@@ -68,8 +73,6 @@ class CountdownWidgetReceiver : GlanceAppWidgetReceiver() {
     override fun onDisabled(context: Context) {
         super.onDisabled(context)
         Log.d("CountdownWidget", "onDisabled called - all widgets removed")
-
-        // Could add cleanup code here if needed
     }
 
     override fun onRestored(context: Context, oldWidgetIds: IntArray, newWidgetIds: IntArray) {
