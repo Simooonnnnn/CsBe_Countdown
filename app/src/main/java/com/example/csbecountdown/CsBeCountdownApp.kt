@@ -18,20 +18,6 @@ class CsBeCountdownApp : Application(), Configuration.Provider {
         super.onCreate()
         Log.d("CsBeCountdownApp", "Application created")
 
-        // Initialize WorkManager with our configuration
-        androidx.work.WorkManager.initialize(this, workManagerConfiguration)
-
-        // Initialize notification components
-        notificationManager = CountdownNotificationManager(this)
-        preferenceManager = NotificationPreferenceManager(this)
-
-        // Check if notifications need to be scheduled
-        if (preferenceManager.getNotificationsEnabled()) {
-            Log.d("CsBeCountdownApp", "Notifications enabled, scheduling")
-            notificationManager.scheduleNotifications()
-        }
-
-        // Initialize widget updates with improved mechanism
         try {
             WidgetUpdater.requestUpdate(this)
             Log.d("CsBeCountdownApp", "Widget updates scheduled with improved mechanism")

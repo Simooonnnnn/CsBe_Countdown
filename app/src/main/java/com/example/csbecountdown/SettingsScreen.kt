@@ -36,7 +36,7 @@ fun SettingsScreen(viewModel: SettingsViewModel = viewModel()) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
+            .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(48.dp))
@@ -44,9 +44,9 @@ fun SettingsScreen(viewModel: SettingsViewModel = viewModel()) {
         // Settings header
         Text(
             text = "Settings",
-            style = MaterialTheme.typography.headlineMedium.copy(
+            style = MaterialTheme.typography.displayLarge.copy(
                 fontWeight = FontWeight.SemiBold,
-                fontSize = 22.sp
+                fontSize = 20.sp
             ),
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onBackground
