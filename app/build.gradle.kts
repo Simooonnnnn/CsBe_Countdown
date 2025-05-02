@@ -51,7 +51,8 @@ android {
 
 dependencies {
     // Add these dependencies to your app-level build.gradle.kts file
-
+// Activity for Compose back handler
+    implementation("androidx.activity:activity-compose:1.8.2")
 // App Startup for component initialization
     implementation("androidx.startup:startup-runtime:1.1.1")
 

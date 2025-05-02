@@ -1,9 +1,16 @@
 package com.example.csbecountdown
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -59,6 +66,7 @@ fun SettingsScreen(viewModel: SettingsViewModel = viewModel()) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
+                .animateContentSize(animationSpec = spring()) // Add content size animation
         ) {
             // Section header
             Text(
@@ -97,6 +105,7 @@ fun SettingsScreen(viewModel: SettingsViewModel = viewModel()) {
                     )
                 }
 
+                // Animated switch
                 Switch(
                     checked = notificationsEnabled,
                     onCheckedChange = { viewModel.toggleNotifications(it) }
@@ -105,11 +114,15 @@ fun SettingsScreen(viewModel: SettingsViewModel = viewModel()) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Notification schedule explanation
+            // Notification schedule explanation - enhanced animation
             AnimatedVisibility(
                 visible = notificationsEnabled,
-                enter = fadeIn() + expandVertically(),
-                exit = fadeOut() + shrinkVertically()
+                enter = fadeIn(animationSpec = tween(300)) +
+                        expandVertically(animationSpec = spring()) +
+                        scaleIn(initialScale = 0.95f),
+                exit = fadeOut(animationSpec = tween(200)) +
+                        shrinkVertically(animationSpec = tween(300)) +
+                        scaleOut(targetScale = 0.95f)
             ) {
                 Surface(
                     modifier = Modifier
@@ -131,10 +144,10 @@ fun SettingsScreen(viewModel: SettingsViewModel = viewModel()) {
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        // Bullet points explaining notification schedule
-                        NotificationScheduleItem("At 70, 60, 50, 40, 30, 20, and 10 days remaining")
-                        NotificationScheduleItem("Daily during the final week")
-                        NotificationScheduleItem("When the countdown reaches zero")
+                        // Bullet points explaining notification schedule with staggered animation
+                        NotificationScheduleItem("At 70, 60, 50, 40, 30, 20, and 10 days remaining", delay = 0)
+                        NotificationScheduleItem("Daily during the final week", delay = 100)
+                        NotificationScheduleItem("When the countdown reaches zero", delay = 200)
                     }
                 }
             }
@@ -143,21 +156,38 @@ fun SettingsScreen(viewModel: SettingsViewModel = viewModel()) {
 }
 
 @Composable
-fun NotificationScheduleItem(text: String) {
+fun NotificationScheduleItem(text: String, delay: Int = 0) {
     Row(
-        modifier = Modifier.padding(vertical = 4.dp),
+        modifier = Modifier
+            .padding(vertical = 4.dp)
+            .animateContentSize(),
         verticalAlignment = Alignment.Top
     ) {
-        Text(
-            text = "•",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSecondaryContainer,
-            modifier = Modifier.padding(end = 8.dp, top = 2.dp)
-        )
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSecondaryContainer
-        )
+        // Animated fade-in for staggered appearance
+        AnimatedVisibility(
+            visible = true, // Always visible once the parent is visible
+            enter = fadeIn(animationSpec = tween(durationMillis = 300, delayMillis = delay)) +
+                    scaleIn(initialScale = 0.8f, animationSpec = tween(durationMillis = 300, delayMillis = delay))
+        ) {
+            Text(
+                text = "•",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                modifier = Modifier.padding(end = 8.dp, top = 2.dp)
+            )
+        }
+
+        // Animated fade-in for staggered appearance
+        AnimatedVisibility(
+            visible = true, // Always visible once the parent is visible
+            enter = fadeIn(animationSpec = tween(durationMillis = 400, delayMillis = delay + 50)) +
+                    scaleIn(initialScale = 0.9f, animationSpec = tween(durationMillis = 300, delayMillis = delay + 50))
+        ) {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+        }
     }
 }

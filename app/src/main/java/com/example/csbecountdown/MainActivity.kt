@@ -4,15 +4,26 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
+import android.window.OnBackInvokedCallback
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,9 +52,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -65,6 +78,8 @@ import java.util.TimeZone
 import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity() {
+    private val TAG = "MainActivity"
+    private var backCallback: OnBackInvokedCallback? = null
 
     // Request launcher for notification permission
     private val requestPermissionLauncher = registerForActivityResult(
@@ -87,6 +102,14 @@ class MainActivity : ComponentActivity() {
         // Check notification permission on Android 13+
         checkNotificationPermission()
 
+        // Enable edge-to-edge display (immersive mode)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            enableEdgeToEdge()
+        }
+
+        // Set up predictive back gesture support
+        setupPredictiveBack()
+
         setContent {
             CsBeCountdownTheme {
                 Surface(
@@ -97,6 +120,28 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    private fun setupPredictiveBack() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            Log.d(TAG, "Setting up predictive back gesture support")
+
+            // Register a system-level back handler
+            backCallback = PredictiveBackHelper.registerBackHandler(this) {
+                Log.d(TAG, "Back pressed at system level")
+                // The actual navigation will be handled by the Compose BackHandler
+            }
+        }
+    }
+
+    override fun onDestroy() {
+        // Clean up back handler when activity is destroyed
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            backCallback?.let { callback ->
+                PredictiveBackHelper.unregisterBackHandler(this, callback)
+            }
+        }
+        super.onDestroy()
     }
 
     /**
@@ -144,24 +189,49 @@ fun CountdownApp(
 ) {
     val timeLeft by countdownViewModel.timeLeftState
     val isCountingUp by countdownViewModel.isCountingUp
-    var selectedTab by remember { mutableIntStateOf(0) }
+    var selectedTab by rememberSaveable { mutableIntStateOf(0) }
+
+    // Add support for predictive back using compose BackHandler
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+        androidx.activity.compose.BackHandler(enabled = selectedTab != 0) {
+            Log.d("CountdownApp", "Back pressed at Compose level")
+            selectedTab = 0
+        }
+    }
 
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
-        // Main content area
+        // Main content area with animated transitions
         Box(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
         ) {
-            when (selectedTab) {
-                0 -> CountdownScreen(timeLeft, isCountingUp)
-                1 -> SettingsScreen(settingsViewModel)
+            // Use AnimatedContent for smooth tab transitions
+            AnimatedContent(
+                targetState = selectedTab,
+                transitionSpec = {
+                    // Create a sliding animation based on which tab we're moving to
+                    if (targetState > initialState) {
+                        // Moving right
+                        (slideInHorizontally { width -> width } + fadeIn(animationSpec = tween(300)))
+                            .togetherWith(slideOutHorizontally { width -> -width } + fadeOut(animationSpec = tween(300)))
+                    } else {
+                        // Moving left
+                        (slideInHorizontally { width -> -width } + fadeIn(animationSpec = tween(300)))
+                            .togetherWith(slideOutHorizontally { width -> width } + fadeOut(animationSpec = tween(300)))
+                    }
+                }
+            ) { targetTab ->
+                when (targetTab) {
+                    0 -> CountdownScreen(timeLeft, isCountingUp)
+                    1 -> SettingsScreen(settingsViewModel)
+                }
             }
         }
 
-        // Bottom navigation with Material icons
+        // Bottom navigation with animated selection indicators
         NavigationBar(
             containerColor = MaterialTheme.colorScheme.surface,
             tonalElevation = 0.dp
@@ -171,10 +241,19 @@ fun CountdownApp(
                 selected = selectedTab == 0,
                 onClick = { selectedTab = 0 },
                 icon = {
-                    Icon(
-                        imageVector = if (selectedTab == 0) AppIcons.TimerSelected else AppIcons.Timer,
-                        contentDescription = "Countdown"
-                    )
+                    AnimatedContent(
+                        targetState = selectedTab == 0,
+                        transitionSpec = {
+                            // Scale animation for icon change
+                            (scaleIn(animationSpec = tween(200)) + fadeIn(animationSpec = tween(200)))
+                                .togetherWith(scaleOut(animationSpec = tween(200)) + fadeOut(animationSpec = tween(200)))
+                        }
+                    ) { selected ->
+                        Icon(
+                            imageVector = if (selected) AppIcons.TimerSelected else AppIcons.Timer,
+                            contentDescription = "Countdown"
+                        )
+                    }
                 },
                 label = { Text("Countdown") }
             )
@@ -184,10 +263,19 @@ fun CountdownApp(
                 selected = selectedTab == 1,
                 onClick = { selectedTab = 1 },
                 icon = {
-                    Icon(
-                        imageVector = if (selectedTab == 1) AppIcons.SettingsSelected else AppIcons.Settings,
-                        contentDescription = "Settings"
-                    )
+                    AnimatedContent(
+                        targetState = selectedTab == 1,
+                        transitionSpec = {
+                            // Scale animation for icon change
+                            (scaleIn(animationSpec = tween(200)) + fadeIn(animationSpec = tween(200)))
+                                .togetherWith(scaleOut(animationSpec = tween(200)) + fadeOut(animationSpec = tween(200)))
+                        }
+                    ) { selected ->
+                        Icon(
+                            imageVector = if (selected) AppIcons.SettingsSelected else AppIcons.Settings,
+                            contentDescription = "Settings"
+                        )
+                    }
                 },
                 label = { Text("Settings") }
             )
@@ -195,6 +283,7 @@ fun CountdownApp(
     }
 }
 
+// Rest of your code remains the same...
 @Composable
 fun CountdownScreen(
     timeLeft: TimeLeft,
@@ -226,10 +315,11 @@ fun CountdownScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            CountdownDigit(value = timeLeft.days, label = "Days")
-            CountdownDigit(value = timeLeft.hours, label = "Hours")
-            CountdownDigit(value = timeLeft.minutes, label = "Minutes")
-            CountdownDigit(value = timeLeft.seconds, label = "Seconds")
+            // Add animations to the digits with a small sequential delay
+            CountdownDigit(value = timeLeft.days, label = "Days", delay = 0)
+            CountdownDigit(value = timeLeft.hours, label = "Hours", delay = 50)
+            CountdownDigit(value = timeLeft.minutes, label = "Minutes", delay = 100)
+            CountdownDigit(value = timeLeft.seconds, label = "Seconds", delay = 150)
         }
 
         Spacer(modifier = Modifier.weight(1f))
@@ -237,21 +327,35 @@ fun CountdownScreen(
 }
 
 @Composable
-fun CountdownDigit(value: Long, label: String) {
+fun CountdownDigit(value: Long, label: String, delay: Int = 0) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
+        modifier = Modifier.padding(horizontal = 4.dp)
     ) {
-        // Digit - larger font exactly matching the screenshot
-        Text(
-            text = String.format("%02d", value),  // Format with leading zero
-            style = MaterialTheme.typography.displayLarge.copy(
-                fontWeight = FontWeight.Bold,
-                fontSize = 48.sp,
-                letterSpacing = (-1).sp  // Tighter letter spacing for numbers
-            ),
-            color = MaterialTheme.colorScheme.onBackground
-        )
+        // Animate the digit value with a pulse effect when it changes
+        AnimatedContent(
+            targetState = value,
+            transitionSpec = {
+                // When the digit changes, add a small scaling animation
+                ContentTransform(
+                    targetContentEnter = fadeIn(animationSpec = tween(durationMillis = 200, delayMillis = delay)) +
+                            scaleIn(initialScale = 0.92f, animationSpec = tween(durationMillis = 200, delayMillis = delay)),
+                    initialContentExit = fadeOut(animationSpec = tween(durationMillis = 150, delayMillis = delay))
+                )
+            }
+        ) { targetCount ->
+            // Digit - larger font exactly matching the screenshot
+            Text(
+                text = String.format("%02d", targetCount),  // Format with leading zero
+                style = MaterialTheme.typography.displayLarge.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 48.sp,
+                    letterSpacing = (-1).sp  // Tighter letter spacing for numbers
+                ),
+                color = MaterialTheme.colorScheme.onBackground
+            )
+        }
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -329,5 +433,13 @@ class CountdownViewModel : ViewModel() {
         val seconds = TimeUnit.MILLISECONDS.toSeconds(difference) % 60
 
         return TimeLeft(days, hours, minutes, seconds)
+    }
+}
+
+@Composable
+fun BackHandler(onBack: () -> Unit) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+        // Only available on Android 15+
+        androidx.activity.compose.BackHandler(onBack = onBack)
     }
 }
