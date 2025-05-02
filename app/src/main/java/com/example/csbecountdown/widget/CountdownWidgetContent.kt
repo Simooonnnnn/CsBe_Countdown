@@ -58,9 +58,9 @@ fun CountdownWidgetContent() {
             horizontalAlignment = Alignment.Horizontal.CenterHorizontally,
             verticalAlignment = Alignment.Vertical.CenterVertically  // Center vertically
         ) {
-            // Title
+            // Title - now changes based on whether we're counting up or down
             Text(
-                text = "CsBe Countdown",
+                text = if (timeLeft.isCountingUp) "Days since CsBe" else "CsBe Countdown",
                 style = TextStyle(
                     color = ColorProvider(textColor),
                     fontSize = 16.sp,
@@ -138,43 +138,52 @@ fun CountdownUnit(
     }
 }
 
+// Modified TimeLeft data class to include isCountingUp flag
 data class TimeLeft(
     val days: Long = 0,
     val hours: Long = 0,
     val minutes: Long = 0,
-    val seconds: Long = 0
+    val seconds: Long = 0,
+    val isCountingUp: Boolean = false  // New flag to indicate if we're counting up
 )
 
+// Modified to handle counting up after target date
 fun calculateTimeLeft(): TimeLeft {
-    // Target date: July 4th at 12:00 (UTC+2)
+    // Target date: Fixed to July 4th, 2025 at 12:00 (UTC+2)
     val targetDate = Calendar.getInstance().apply {
         timeZone = TimeZone.getTimeZone("GMT+2")
+        set(Calendar.YEAR, 2025)  // Fixed to 2025
         set(Calendar.MONTH, Calendar.JULY)
         set(Calendar.DAY_OF_MONTH, 4)
         set(Calendar.HOUR_OF_DAY, 12)
         set(Calendar.MINUTE, 0)
         set(Calendar.SECOND, 0)
         set(Calendar.MILLISECOND, 0)
-
-        // If target date has already passed this year, set to next year
-        if (timeInMillis < System.currentTimeMillis()) {
-            add(Calendar.YEAR, 1)
-        }
     }
 
     val currentTime = System.currentTimeMillis()
     val targetTime = targetDate.timeInMillis
 
-    // If current time passed target time, return zeros
-    if (currentTime >= targetTime) {
-        return TimeLeft(0, 0, 0, 0)
+    // Check if we've passed the target date
+    val isCountingUp = currentTime >= targetTime
+
+    // If current time passed target time, calculate time SINCE target
+    if (isCountingUp) {
+        val difference = currentTime - targetTime
+        val days = TimeUnit.MILLISECONDS.toDays(difference)
+        val hours = TimeUnit.MILLISECONDS.toHours(difference) % 24
+        val minutes = TimeUnit.MILLISECONDS.toMinutes(difference) % 60
+        val seconds = TimeUnit.MILLISECONDS.toSeconds(difference) % 60
+
+        return TimeLeft(days, hours, minutes, seconds, isCountingUp = true)
     }
 
+    // Otherwise calculate time UNTIL target
     val difference = targetTime - currentTime
     val days = TimeUnit.MILLISECONDS.toDays(difference)
     val hours = TimeUnit.MILLISECONDS.toHours(difference) % 24
     val minutes = TimeUnit.MILLISECONDS.toMinutes(difference) % 60
     val seconds = TimeUnit.MILLISECONDS.toSeconds(difference) % 60
 
-    return TimeLeft(days, hours, minutes, seconds)
+    return TimeLeft(days, hours, minutes, seconds, isCountingUp = false)
 }

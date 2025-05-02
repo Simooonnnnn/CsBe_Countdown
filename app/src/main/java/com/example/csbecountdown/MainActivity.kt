@@ -143,6 +143,7 @@ fun CountdownApp(
     settingsViewModel: SettingsViewModel = viewModel()
 ) {
     val timeLeft by countdownViewModel.timeLeftState
+    val isCountingUp by countdownViewModel.isCountingUp
     var selectedTab by remember { mutableIntStateOf(0) }
 
     Column(
@@ -155,7 +156,7 @@ fun CountdownApp(
                 .fillMaxWidth()
         ) {
             when (selectedTab) {
-                0 -> CountdownScreen(timeLeft)
+                0 -> CountdownScreen(timeLeft, isCountingUp)
                 1 -> SettingsScreen(settingsViewModel)
             }
         }
@@ -195,7 +196,10 @@ fun CountdownApp(
 }
 
 @Composable
-fun CountdownScreen(timeLeft: TimeLeft) {
+fun CountdownScreen(
+    timeLeft: TimeLeft,
+    isCountingUp: Boolean
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -205,8 +209,9 @@ fun CountdownScreen(timeLeft: TimeLeft) {
         Spacer(modifier = Modifier.height(48.dp))
 
         // Header - more minimal and placed at the top
+        // Change text based on whether we're counting up or down
         Text(
-            text = "CsBe Countdown",
+            text = if (isCountingUp) "Days since CsBe" else "CsBe Countdown",
             style = MaterialTheme.typography.displayLarge.copy(
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 20.sp
@@ -271,28 +276,30 @@ data class TimeLeft(
 )
 
 class CountdownViewModel : ViewModel() {
-    // Target date: July 4th at 12:00 (UTC+2)
+    // Target date: July 4th at 12:00 (UTC+2) - FIXED to 2025
     private val targetDate = Calendar.getInstance().apply {
         timeZone = TimeZone.getTimeZone("GMT+2")
+        set(Calendar.YEAR, 2025)  // Fixed to 2025
         set(Calendar.MONTH, Calendar.JULY)
         set(Calendar.DAY_OF_MONTH, 4)
         set(Calendar.HOUR_OF_DAY, 12)
         set(Calendar.MINUTE, 0)
         set(Calendar.SECOND, 0)
         set(Calendar.MILLISECOND, 0)
-
-        // If target date has already passed this year, set to next year
-        if (timeInMillis < System.currentTimeMillis()) {
-            add(Calendar.YEAR, 1)
-        }
     }
 
     private val _timeLeftState = mutableStateOf(calculateTimeLeft())
     val timeLeftState: State<TimeLeft> = _timeLeftState
 
+    // Add state to track if we are counting up (after target date has passed)
+    private val _isCountingUp = mutableStateOf(System.currentTimeMillis() > targetDate.timeInMillis)
+    val isCountingUp: State<Boolean> = _isCountingUp
+
     init {
         viewModelScope.launch {
             while (true) {
+                // Update the counting up state
+                _isCountingUp.value = System.currentTimeMillis() > targetDate.timeInMillis
                 _timeLeftState.value = calculateTimeLeft()
                 delay(1000)
             }
@@ -303,11 +310,18 @@ class CountdownViewModel : ViewModel() {
         val currentTime = System.currentTimeMillis()
         val targetTime = targetDate.timeInMillis
 
-        // If current time passed target time, return zeros
+        // If current time passed target time, calculate time SINCE target (counting up)
         if (currentTime >= targetTime) {
-            return TimeLeft(0, 0, 0, 0)
+            val difference = currentTime - targetTime
+            val days = TimeUnit.MILLISECONDS.toDays(difference)
+            val hours = TimeUnit.MILLISECONDS.toHours(difference) % 24
+            val minutes = TimeUnit.MILLISECONDS.toMinutes(difference) % 60
+            val seconds = TimeUnit.MILLISECONDS.toSeconds(difference) % 60
+
+            return TimeLeft(days, hours, minutes, seconds)
         }
 
+        // Otherwise calculate time UNTIL target (counting down)
         val difference = targetTime - currentTime
         val days = TimeUnit.MILLISECONDS.toDays(difference)
         val hours = TimeUnit.MILLISECONDS.toHours(difference) % 24

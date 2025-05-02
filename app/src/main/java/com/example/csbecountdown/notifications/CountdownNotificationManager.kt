@@ -39,20 +39,16 @@ class CountdownNotificationManager(private val application: Application) {
         const val DATA_NOTIFICATION_ID = "notification_id"
     }
 
-    // Target date: July 4th at 12:00 (UTC+2)
+    // Target date: July 4th, 2025 at 12:00 (UTC+2)
     private val targetDate = Calendar.getInstance().apply {
         timeZone = TimeZone.getTimeZone("GMT+2")
+        set(Calendar.YEAR, 2025)  // Fixed to 2025
         set(Calendar.MONTH, Calendar.JULY)
         set(Calendar.DAY_OF_MONTH, 4)
         set(Calendar.HOUR_OF_DAY, 12)
         set(Calendar.MINUTE, 0)
         set(Calendar.SECOND, 0)
         set(Calendar.MILLISECOND, 0)
-
-        // If target date has already passed this year, set to next year
-        if (timeInMillis < System.currentTimeMillis()) {
-            add(Calendar.YEAR, 1)
-        }
     }
 
     private val notificationManager = application.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
