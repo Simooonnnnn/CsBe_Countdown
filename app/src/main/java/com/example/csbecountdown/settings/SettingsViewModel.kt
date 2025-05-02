@@ -23,6 +23,15 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             _notificationsEnabled.value = preferenceManager.getNotificationsEnabled()
         }
     }
+    fun resetNotificationHistory() {
+        viewModelScope.launch {
+            notificationManager.resetNotificationHistory()
+            // Re-schedule notifications after reset
+            if (_notificationsEnabled.value) {
+                notificationManager.scheduleNotifications()
+            }
+        }
+    }
 
     fun toggleNotifications(enabled: Boolean) {
         viewModelScope.launch {
@@ -55,6 +64,7 @@ class NotificationPreferenceManager(private val application: Application) {
     fun getNotificationsEnabled(): Boolean {
         return sharedPreferences.getBoolean(KEY_NOTIFICATIONS_ENABLED, false)
     }
+
 
     fun setNotificationsEnabled(enabled: Boolean) {
         sharedPreferences.edit().putBoolean(KEY_NOTIFICATIONS_ENABLED, enabled).apply()

@@ -35,8 +35,8 @@ class CountdownNotificationManager(private val application: Application) {
 
         // WorkManager tags
         private const val WORK_TAG_PREFIX = "countdown_notification_"
-        private const val DATA_DAYS_LEFT = "days_left"
-        private const val DATA_NOTIFICATION_ID = "notification_id"
+        const val DATA_DAYS_LEFT = "days_left"
+        const val DATA_NOTIFICATION_ID = "notification_id"
     }
 
     // Target date: July 4th at 12:00 (UTC+2)
@@ -57,6 +57,7 @@ class CountdownNotificationManager(private val application: Application) {
 
     private val notificationManager = application.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
     private val workManager = WorkManager.getInstance(application)
+    private val historyManager = NotificationHistoryManager(application)
 
     init {
         createNotificationChannel()
@@ -98,20 +99,32 @@ class CountdownNotificationManager(private val application: Application) {
         val milestoneDays = listOf(70, 60, 50, 40, 30, 20, 10)
         milestoneDays.forEach { milestone ->
             if (daysLeft >= milestone) {
-                scheduleMilestoneNotification(milestone)
+                // Only schedule if this notification hasn't been shown yet
+                if (!historyManager.isNotificationShown(milestone)) {
+                    scheduleMilestoneNotification(milestone)
+                } else {
+                    Log.d(TAG, "Skipping milestone $milestone - already shown")
+                }
             }
         }
 
         // Final week (7, 6, 5, 4, 3, 2, 1)
         for (day in 7 downTo 1) {
             if (daysLeft >= day) {
-                scheduleMilestoneNotification(day)
+                // Only schedule if this notification hasn't been shown yet
+                if (!historyManager.isNotificationShown(day)) {
+                    scheduleMilestoneNotification(day)
+                } else {
+                    Log.d(TAG, "Skipping day $day - already shown")
+                }
             }
         }
 
         // Final day (0)
-        if (daysLeft >= 0) {
+        if (daysLeft >= 0 && !historyManager.isNotificationShown(0)) {
             scheduleFinalNotification()
+        } else if (daysLeft >= 0) {
+            Log.d(TAG, "Skipping final notification - already shown")
         }
 
         Log.d(TAG, "All notifications scheduled")
@@ -250,5 +263,13 @@ class CountdownNotificationManager(private val application: Application) {
         notificationManager.cancelAll()
 
         Log.d(TAG, "All notifications canceled")
+    }
+
+    /**
+     * Reset notification history (for testing or when target date changes)
+     */
+    fun resetNotificationHistory() {
+        historyManager.resetAllHistory()
+        Log.d(TAG, "Notification history reset")
     }
 }
